@@ -1,4 +1,4 @@
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 
 class ToffoliDecomposer:
 
@@ -79,6 +79,7 @@ class ToffoliDecomposer:
         self.control = []
         self.ancilla = []
         self.target = QuantumRegister(1, 'target')
+        self.result = ClassicalRegister(1, 'result')
         registers = []
         for i in range(self.ancilla_count):
             if 2*i < self.n:
@@ -93,6 +94,7 @@ class ToffoliDecomposer:
             self.ancilla.extend(qa)
             registers.append(qa)
         registers.append(self.target)
+        registers.append(self.result)
         self.qc = QuantumCircuit(*registers)
     
     def __create_first_layer(self):
@@ -148,13 +150,17 @@ class ToffoliDecomposer:
                 barrier_idx += 1
         self.qc.cx(control[0], self.target[0]) # Create final CX gate onto target
 
-    def decompose(self, n, show_barrier):
+    def decompose(self, n, show_barrier, one_controls):
         self.n = n
         self.ancilla_count = n // 2 + 1
         self.show_barrier = show_barrier
 
         self.__create_qc()
+        for c in one_controls:
+            self.qc.x(self.control[c])
         nc, na = self.__create_first_layer()
         self.__create_final_layers(nc, na)
+
+        self.qc.measure(self.target[0], self.result[0])
 
         return self.qc

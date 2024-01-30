@@ -1,7 +1,20 @@
 from toffoli_decomposer import ToffoliDecomposer
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
+
+# QiskitRuntimeService.save_account(channel="ibm_quantum", token="TOKEN")
 
 td = ToffoliDecomposer()
-control_qubit_count = 21
-show_barrier = True # Should be set to False to reduce transpiled gate depth
-qc = td.decompose(control_qubit_count, show_barrier)
-print(qc)
+n = 500
+show_barrier = True
+one_controls = range(n)
+qc = td.decompose(n, show_barrier, one_controls)
+ 
+service = QiskitRuntimeService()
+ 
+backend = service.backend('ibmq_qasm_simulator')
+ 
+sampler = Sampler(backend=backend)
+ 
+job = sampler.run(qc, shots=100)
+ 
+print(job.result())
